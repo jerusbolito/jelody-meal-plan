@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  padding-top: env(safe-area-inset-top);
+}
+button, a, select, summary { touch-action: manipulation; }
+button:not(:disabled):active, a:active { @apply opacity-70; }
+:focus-visible { @apply outline-2 outline-offset-2 outline-green-600; }
+input, select, textarea { font-size: 16px; } /* prevents iOS zoom-on-focus */
