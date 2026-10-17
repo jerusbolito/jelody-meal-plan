@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
-html { -webkit-text-size-adjust: 100%; }
+/* Tailwind v4 defaults borders/dividers to currentColor (black); use a soft grey like v3 */
+@layer base { *, ::before, ::after { border-color: var(--color-slate-200); } }
+
+html { -webkit-text-size-adjust: 100%; font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif; font-feature-settings: 'cv11', 'ss01'; }
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
   -webkit-tap-highlight-color: transparent;
@@ -11,3 +14,52 @@ button, a, select, summary { touch-action: manipulation; }
 button:not(:disabled):active, a:active { @apply opacity-70; }
 :focus-visible { @apply outline-2 outline-offset-2 outline-green-600; }
 input, select, textarea { font-size: 16px; } /* prevents iOS zoom-on-focus */
+
+/* Round tick-box used for shopping and cooking checklists */
+.tick {
+  appearance: none; flex: none; width: 1.625rem; height: 1.625rem; border-radius: 9999px;
+  border: 2px solid var(--color-slate-300); background: var(--surface, #fff) center / 70% no-repeat; transition: background-color .12s, border-color .12s;
+}
+.tick:checked {
+  border-color: var(--color-green-600); background-color: var(--color-green-600);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E");
+}
+
+/* ---------- Dark theme ----------
+   Tailwind's colours are CSS variables, so remapping them re-skins every existing class.
+   `white` is left alone (it is also the text colour on green buttons); white *surfaces* are overridden below. */
+:root { --surface: #ffffff; }
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface: #1a1d23;
+  --color-slate-50: #0e1013;
+  --color-slate-100: #21252c;
+  --color-slate-200: #2b3039;
+  --color-slate-300: #3d4450;
+  --color-slate-400: #77808f;
+  --color-slate-500: #9aa3b2;
+  --color-slate-600: #b6bdc9;
+  --color-slate-700: #ced3dc;
+  --color-slate-800: #e2e6ed;
+  --color-slate-900: #f2f4f8;
+  --color-green-50: #11251a;
+  --color-green-100: #163221;
+  --color-green-200: #21482f;
+  --color-green-700: #5fd68b;
+  --color-green-800: #86efac;
+  --color-amber-50: #2a2110;
+  --color-amber-100: #3a2c10;
+  --color-amber-200: #5b4513;
+  --color-amber-600: #f5b94a;
+  --color-amber-700: #f2b650;
+  --color-amber-900: #fcd9a0;
+  --color-red-50: #2e1618;
+  --color-red-600: #f87171;
+  --color-red-700: #fca5a5;
+  --color-blue-50: #12202f;
+  --color-blue-800: #93c5fd;
+}
+:root[data-theme='dark'] .bg-white { background-color: var(--surface); }
+:root[data-theme='dark'] [class*='bg-white/'] { background-color: color-mix(in oklab, var(--surface) 88%, transparent); }
+:root[data-theme='dark'] .shadow-sm, :root[data-theme='dark'] [class*='shadow-['] { --tw-shadow-color: rgb(0 0 0 / 0.5); }
+:root[data-theme='dark'] img { opacity: .92; }

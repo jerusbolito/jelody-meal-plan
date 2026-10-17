@@ -67,7 +67,7 @@ export default function Dishes({ householdId }: { householdId: string }) {
           </button>
         ))}
       </div>
-      <Link to="/dishes/new" aria-label="Add dish" className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-10 flex h-14 items-center gap-1 rounded-full bg-green-600 px-5 font-medium text-white shadow-lg">+ Add dish</Link>
+      <Link to="/dishes/new" aria-label="Add dish" className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-10 flex h-14 items-center gap-1 rounded-full bg-green-600 px-5 font-medium text-white shadow-lg">+ Add dish</Link>
       {tab === 'active' && <Input type="search" placeholder="🔍 Search dishes" value={q} onChange={(e) => setQ(e.target.value)} />}
       {tab === 'idea' && (
         <>
@@ -82,6 +82,9 @@ export default function Dishes({ householdId }: { householdId: string }) {
               <div className="font-medium">{d.name}</div>
               <div className="text-xs text-slate-500">{[d.cuisine, `${d.prep_minutes} min`, d.calories != null && `${d.calories} kcal${d.serving_g != null ? ` / ${d.serving_g} g` : ''}`, `${d.ingredients.length} ingredients`].filter(Boolean).join(' · ')}</div>
             </Link>
+            {tab === 'active' && (
+              <Link to={`/dishes/${d.id}/cook`} aria-label={`Cook ${d.name}`} className="flex size-11 items-center justify-center rounded-xl bg-green-50 text-xl">🍳</Link>
+            )}
             {tab === 'idea' && (
               <>
                 <Button onClick={() => accept(d)}>Keep</Button>

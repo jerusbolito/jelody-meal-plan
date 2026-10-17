@@ -33,9 +33,14 @@ export default function Home() {
         )}
         <ul className="space-y-2">
           {todays.map((e) => (
-            <li key={e.id}><Card className="p-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-green-700">{e.slot}</div>
-              <div className="text-lg font-medium">{name(e.dish_id)}</div>
+            <li key={e.id}><Card className="p-0">
+              <Link to={e.dish_id ? `/dishes/${e.dish_id}/cook` : '/plan'} className="flex items-center justify-between p-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-green-700">{e.slot}</div>
+                  <div className="text-lg font-medium">{name(e.dish_id)}</div>
+                </div>
+                {e.dish_id && <span className="rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-green-700">Cook →</span>}
+              </Link>
             </Card></li>
           ))}
         </ul>

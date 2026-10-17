@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { usePrefs, useTemplate } from '../lib/data'
+import { useMembers, usePrefs, useTemplate } from '../lib/data'
+import { Link } from 'react-router-dom'
+import { setPref, useThemePref, type ThemePref } from '../lib/theme'
 import { supabase } from '../lib/supabase'
 import type { Preferences } from '../lib/types'
 import { Button, csv, Field, H1, Input } from '../components/ui'
@@ -12,6 +14,8 @@ export default function Settings({ household }: { household: { id: string; name:
   const qc = useQueryClient()
   const prefs = usePrefs()
   const template = useTemplate()
+  const theme = useThemePref()
+  const mem = useMembers().data
   const [p, setP] = useState<Preferences | null>(null)
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -47,6 +51,42 @@ export default function Settings({ household }: { household: { id: string; name:
       </section>
 
       <section className="space-y-2">
+        <h2 className="font-semibold">Household members{mem ? ` (${mem.members.length})` : ''}</h2>
+        <ul className="divide-y rounded-3xl border border-slate-100 bg-white shadow-sm">
+          {(mem?.members ?? []).map((m) => (
+            <li key={m.user_id} className="flex items-center gap-3 p-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-green-100 font-semibold text-green-700" aria-hidden>
+                {(m.display_name?.trim()[0] ?? '?').toUpperCase()}
+              </span>
+              <span className="flex-1 font-medium">{m.display_name?.trim() || 'Unnamed'}</span>
+              {m.user_id === mem?.me && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">You</span>}
+            </li>
+          ))}
+        </ul>
+        {mem && mem.members.length < 2 && <p className="text-sm text-slate-500">Just you so far. Share the invite code above so your partner can join.</p>}
+      </section>
+
+      <Link to="/help" className="flex items-center justify-between rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div>
+          <div className="font-semibold">How to use the app</div>
+          <div className="text-sm text-slate-500">Every feature, explained</div>
+        </div>
+        <span className="text-xl text-slate-400">›</span>
+      </Link>
+
+      <section className="space-y-2">
+        <h2 className="font-semibold">Appearance</h2>
+        <div className="flex rounded-2xl bg-slate-200/70 p-1" role="radiogroup" aria-label="Theme">
+          {(['system', 'light', 'dark'] as ThemePref[]).map((t) => (
+            <button key={t} role="radio" aria-checked={theme === t} onClick={() => setPref(t)}
+              className={`min-h-10 flex-1 rounded-xl text-sm font-medium capitalize ${theme === t ? 'bg-white shadow-sm' : 'text-slate-500'}`}>
+              {t === 'system' ? 'Auto' : t}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-2">
         <h2 className="font-semibold">Meals per day</h2>
         {DAYS.map((d, wd) => (
           <div key={d} className="flex items-center gap-2">
@@ -77,7 +117,7 @@ export default function Settings({ household }: { household: { id: string; name:
           <Input type="number" min={0} max={3} value={p.new_ideas_per_week} onChange={(e) => setP({ ...p, new_ideas_per_week: Math.min(3, Math.max(0, +e.target.value)) })} />
         </Field>
         <Field label="Notes for the AI">
-          <textarea className="h-24 w-full rounded-xl border border-slate-300 bg-white p-3" value={p.notes} onChange={(e) => setP({ ...p, notes: e.target.value })} />
+          <textarea className="h-24 w-full rounded-2xl border border-slate-200 bg-white p-3" value={p.notes} onChange={(e) => setP({ ...p, notes: e.target.value })} />
         </Field>
         <Button className="w-full" onClick={save}>{saved ? 'Saved ✓' : 'Save'}</Button>
       </section>

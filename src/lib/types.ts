@@ -25,6 +25,7 @@ export type Dish = Partial<Nutrition> & {
   prep_minutes: number
   servings: number
   instructions: string
+  notes?: string
   source: 'manual' | 'ai'
   status: 'active' | 'idea' | 'archived'
   ingredients: Ingredient[]

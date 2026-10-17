@@ -35,6 +35,7 @@ export default function DishEdit({ householdId }: { householdId: string }) {
   const [prep, setPrep] = useState(30)
   const [servings, setServings] = useState(4)
   const [instructions, setInstructions] = useState('')
+  const [notes, setNotes] = useState('')
   const [ings, setIngs] = useState<Ingredient[]>([blank()])
   const [nutri, setNutri] = useState<Nutrition>(NO_NUTRI)
   const [estimating, setEstimating] = useState(false)
@@ -45,7 +46,7 @@ export default function DishEdit({ householdId }: { householdId: string }) {
   useEffect(() => {
     if (!existing) return
     setName(existing.name); setCuisine(existing.cuisine); setTags(existing.tags.join(', '))
-    setPrep(existing.prep_minutes); setServings(existing.servings); setInstructions(existing.instructions)
+    setPrep(existing.prep_minutes); setServings(existing.servings); setInstructions(existing.instructions); setNotes(existing.notes ?? '')
     setIngs(existing.ingredients.length ? existing.ingredients : [blank()])
     setNutri(pickNutri(existing))
   }, [existing?.id])
@@ -74,7 +75,7 @@ export default function DishEdit({ householdId }: { householdId: string }) {
 
   const save = async () => {
     const cleaned = ings.filter((i) => i.name.trim()).map((i) => ({ ...i, category: i.category || guessCategory(i.name) }))
-    await saveDish(householdId, { id: existing?.id, name, cuisine, tags: csv(tags), prep_minutes: prep, servings, instructions, ...nutri, source: existing?.source ?? 'manual', status: existing?.status ?? 'active' } as any, cleaned)
+    await saveDish(householdId, { id: existing?.id, name, cuisine, tags: csv(tags), prep_minutes: prep, servings, instructions, notes, ...nutri, source: existing?.source ?? 'manual', status: existing?.status ?? 'active' } as any, cleaned)
     qc.invalidateQueries({ queryKey: ['dishes'] })
     nav('/dishes')
   }
@@ -90,9 +91,9 @@ export default function DishEdit({ householdId }: { householdId: string }) {
     <div className="space-y-4">
       <H1>{existing ? 'Edit dish' : 'New dish'}</H1>
       {!existing && (
-        <details className="rounded-2xl border bg-white p-3 shadow-sm">
+        <details className="rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
           <summary className="min-h-11 cursor-pointer py-2 text-sm font-medium">Paste a recipe (AI fills in the rest)</summary>
-          <textarea className="mb-2 mt-2 h-32 w-full rounded-xl border border-slate-300 p-3" value={paste} onChange={(e) => setPaste(e.target.value)} />
+          <textarea className="mb-2 mt-2 h-32 w-full rounded-2xl border border-slate-200 p-3" value={paste} onChange={(e) => setPaste(e.target.value)} />
           <Button disabled={busy || !paste.trim()} onClick={parse}>{busy ? 'Parsing…' : 'Parse'}</Button>
           {err && <p className="text-sm text-red-600">{err}</p>}
         </details>
@@ -113,7 +114,7 @@ export default function DishEdit({ householdId }: { householdId: string }) {
             <Input placeholder="Qty" type="number" inputMode="decimal" value={ing.quantity ?? ''} onChange={(e) => patch(i, { quantity: e.target.value === '' ? null : +e.target.value })} />
             <Input placeholder="Unit" value={ing.unit} onChange={(e) => patch(i, { unit: e.target.value })} />
             <button aria-label="Remove ingredient" className="size-11 text-slate-400" onClick={() => setIngs(ings.filter((_, j) => j !== i))}>✕</button>
-            <select className="col-span-4 min-h-10 rounded-xl border border-slate-300 bg-white px-2 text-sm text-slate-600" value={ing.category} onChange={(e) => patch(i, { category: e.target.value })}>
+            <select className="col-span-4 min-h-10 rounded-2xl border border-slate-200 bg-white px-2 text-sm text-slate-600" value={ing.category} onChange={(e) => patch(i, { category: e.target.value })}>
               <option value="">Category: auto</option>
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
             </select>
@@ -140,9 +141,12 @@ export default function DishEdit({ householdId }: { householdId: string }) {
       </section>
 
       <Field label="Instructions (optional)">
-        <textarea className="h-28 w-full rounded-xl border border-slate-300 bg-white p-3" value={instructions} onChange={(e) => setInstructions(e.target.value)} />
+        <textarea className="h-28 w-full rounded-2xl border border-slate-200 bg-white p-3" value={instructions} onChange={(e) => setInstructions(e.target.value)} />
       </Field>
-      <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 border-t bg-white/95 p-3 backdrop-blur">
+      <Field label="Our notes (shown while cooking)">
+        <textarea className="h-20 w-full rounded-xl border border-amber-200 bg-amber-50 p-3" placeholder="e.g. use less salt, she likes it spicier, double the sauce" value={notes} onChange={(e) => setNotes(e.target.value)} />
+      </Field>
+      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 border-t bg-white/95 p-3 backdrop-blur">
         <div className="mx-auto flex max-w-xl gap-2">
           <Button variant="ghost" onClick={() => nav('/dishes')}>Cancel</Button>
           {existing && <Button variant="danger" onClick={archive}>Archive</Button>}

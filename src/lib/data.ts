@@ -1,10 +1,13 @@
+import { addDays } from './dates'
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { pendingCount } from './outbox'
 import { supabase } from './supabase'
 import type { Dish, DishStats, Ingredient, PlanEntry, Preferences, SlotTemplate } from './types'
 
 export async function getHouseholdId(): Promise<string | null> {
-  const { data } = await supabase.from('household_members').select('household_id').limit(1).maybeSingle()
+  const { data, error } = await supabase.from('household_members').select('household_id').limit(1).maybeSingle()
+  if (error) throw error // a failed (e.g. offline) fetch must not look like "no household"
   return data?.household_id ?? null
 }
 
@@ -14,7 +17,8 @@ export const useHousehold = () =>
     queryFn: async () => {
       const id = await getHouseholdId()
       if (!id) return null
-      const { data } = await supabase.from('households').select('id,name,invite_code').eq('id', id).single()
+      const { data, error } = await supabase.from('households').select('id,name,invite_code').eq('id', id).single()
+      if (error) throw error
       return data
     },
   })
@@ -29,11 +33,37 @@ export function useRealtime(householdId: string | undefined) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'plan_entries' }, () => qc.invalidateQueries({ queryKey: ['entries'] }))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dishes' }, () => qc.invalidateQueries({ queryKey: ['dishes'] }))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dish_ingredients' }, () => qc.invalidateQueries({ queryKey: ['dishes'] }))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_checks' }, () => qc.invalidateQueries({ queryKey: ['checks'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_checks' }, () => { if (!pendingCount()) qc.invalidateQueries({ queryKey: ['checks'] }) })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_extras' }, () => { if (!pendingCount()) qc.invalidateQueries({ queryKey: ['extras'] }) })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_staples' }, () => { if (!pendingCount()) qc.invalidateQueries({ queryKey: ['staples'] }) })
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [householdId, qc])
 }
+
+/** The signed-in person's display name (for "added by"). */
+export const useMe = () =>
+  useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getSession() // local, works offline
+      const { data, error } = await supabase.from('household_members').select('display_name').eq('user_id', u.session?.user.id ?? '').maybeSingle()
+      if (error) throw error
+      return (data?.display_name as string | null) ?? null
+    },
+  })
+
+export type Member = { user_id: string; display_name: string | null }
+export const useMembers = () =>
+  useQuery({
+    queryKey: ['members'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('household_members').select('user_id,display_name').order('display_name')
+      if (error) throw error
+      const { data: s } = await supabase.auth.getSession()
+      return { members: (data ?? []) as Member[], me: s.session?.user.id ?? null }
+    },
+  })
 
 export const useDishes = () =>
   useQuery({
@@ -49,7 +79,8 @@ export const useStats = () =>
   useQuery({
     queryKey: ['stats'],
     queryFn: async (): Promise<Record<string, DishStats>> => {
-      const { data } = await supabase.from('dish_stats').select('dish_id,affinity,last_cooked_at')
+      const { data, error } = await supabase.from('dish_stats').select('dish_id,affinity,last_cooked_at')
+      if (error) throw error
       return Object.fromEntries((data ?? []).map((s) => [s.dish_id, s as DishStats]))
     },
   })
@@ -58,7 +89,8 @@ export const usePrefs = () =>
   useQuery({
     queryKey: ['prefs'],
     queryFn: async (): Promise<Preferences> => {
-      const { data } = await supabase.from('preferences').select('*').single()
+      const { data, error } = await supabase.from('preferences').select('*').single()
+      if (error) throw error
       return data as Preferences
     },
   })
@@ -67,7 +99,8 @@ export const useTemplate = () =>
   useQuery({
     queryKey: ['template'],
     queryFn: async (): Promise<SlotTemplate> => {
-      const { data } = await supabase.from('slot_template').select('weekday,slots').order('weekday')
+      const { data, error } = await supabase.from('slot_template').select('weekday,slots').order('weekday')
+      if (error) throw error
       const t: SlotTemplate = Array.from({ length: 7 }, () => ['dinner'])
       data?.forEach((r) => { t[r.weekday] = r.slots })
       return t
@@ -99,10 +132,11 @@ export async function ensurePlan(householdId: string, weekStart: string): Promis
   return data.id
 }
 
-/** Replace unlocked entries of a week with the generated ones. */
+/** Replace unlocked entries of a 7-day block (starting on any date) with the generated ones. */
 export async function saveWeek(householdId: string, weekStart: string, entries: PlanEntry[]) {
   const planId = await ensurePlan(householdId, weekStart)
-  await supabase.from('plan_entries').delete().eq('plan_id', planId).eq('locked', false)
+  // by date range, not plan id: blocks started on different days can overlap
+  await supabase.from('plan_entries').delete().gte('date', weekStart).lte('date', addDays(weekStart, 6)).eq('locked', false)
   const rows = entries.filter((e) => !e.locked && e.dish_id).map((e) => ({ plan_id: planId, date: e.date, slot: e.slot, dish_id: e.dish_id, locked: false }))
   if (rows.length) {
     const { error } = await supabase.from('plan_entries').insert(rows)
