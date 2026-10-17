@@ -23,7 +23,7 @@ export default defineConfig({
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' },
         ],
       },
-      workbox: { navigateFallback: 'index.html', globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'] },
+      workbox: { navigateFallback: 'index.html', importScripts: ['push-sw.js'], globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'] },
     }),
   ],
   test: { environment: 'node' },

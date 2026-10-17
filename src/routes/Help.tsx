@@ -78,6 +78,17 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    icon: '🔔', title: 'Notifications',
+    intro: 'Gentle reminders, on each person’s own phone.',
+    points: [
+      'Settings → Notifications → “Turn on notifications on this device”. Each phone turns them on separately.',
+      'iPhone: add the app to your Home Screen first, then open it from there (Apple only allows notifications for installed apps).',
+      'Today’s meals: a reminder at the time you choose with what’s planned.',
+      'Plan & shop: on Friday and Saturday evening, a nudge if next week has no meals yet, or is planned but the shopping list hasn’t been started.',
+      '“Send a test” checks that it works. Turn them off any time.',
+    ],
+  },
+  {
     icon: '⚙️', title: 'Settings',
     intro: 'Make the planner fit your household.',
     points: [

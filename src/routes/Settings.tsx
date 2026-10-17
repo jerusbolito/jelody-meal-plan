@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { setPref, useThemePref, type ThemePref } from '../lib/theme'
 import { supabase } from '../lib/supabase'
 import type { Preferences } from '../lib/types'
+import Notifications from '../components/Notifications'
 import { Button, csv, Field, H1, Input } from '../components/ui'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -85,6 +86,8 @@ export default function Settings({ household }: { household: { id: string; name:
           ))}
         </div>
       </section>
+
+      <Notifications householdId={household.id} />
 
       <section className="space-y-2">
         <h2 className="font-semibold">Meals per day</h2>
