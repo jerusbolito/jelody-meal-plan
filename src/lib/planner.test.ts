@@ -4,7 +4,7 @@ import type { Dish, Preferences } from './types'
 
 const prefs: Preferences = {
   diets: [], allergies: ['peanut'], dislikes: [], favorite_cuisines: [],
-  weeknight_max_minutes: 45, new_ideas_per_week: 0, notes: '',
+  weeknight_max_minutes: 45, new_ideas_per_week: 0, notes: '', week_start_day: 0,
 }
 const mk = (i: number, over: Partial<Dish> = {}): Dish => ({
   id: `d${i}`, name: `Dish ${i}`, cuisine: `c${i % 3}`, tags: [], prep_minutes: 30, servings: 4,

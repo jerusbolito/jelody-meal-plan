@@ -12,13 +12,11 @@ const fmt = (s: string) => parse(s).toLocaleDateString(undefined, { weekday: 'sh
 
 export default function Planner({ householdId }: { householdId: string }) {
   const qc = useQueryClient()
-  const [ws, setWsState] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('planner-ws')
-      if (saved) return saved
-    } catch { /* storage unavailable */ }
-    return addDays(weekStart(today()), 7) // default: next week
+  const prefs = usePrefs()
+  const [wsPicked, setWsState] = useState<string | null>(() => {
+    try { return sessionStorage.getItem('planner-ws') } catch { return null }
   })
+  const ws = wsPicked ?? addDays(weekStart(today(), prefs.data?.week_start_day ?? 0), 7) // default: next week
   const setWs = (v: string) => {
     setWsState(v)
     try { sessionStorage.setItem('planner-ws', v) } catch { /* storage unavailable */ }
@@ -32,7 +30,6 @@ export default function Planner({ householdId }: { householdId: string }) {
 
   const dishes = useDishes()
   const stats = useStats()
-  const prefs = usePrefs()
   const template = useTemplate()
   const entries = useEntries(addDays(ws, -28), addDays(ws, 6 + (weeks - 1) * 7))
 

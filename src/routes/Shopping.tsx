@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { addDays, parse, today, weekStart } from '../lib/dates'
-import { useDishes, useEntries, useMe } from '../lib/data'
+import { useDishes, useEntries, useMe, usePrefs } from '../lib/data'
 import { send } from '../lib/outbox'
 import { buildShoppingList, groupByCategory, guessCategory, itemLabel, toExportText } from '../lib/shopping'
 import { supabase } from '../lib/supabase'
@@ -23,7 +23,8 @@ const fmt = (s: string) => parse(s).toLocaleDateString(undefined, { day: 'numeri
 
 export default function Shopping({ householdId }: { householdId: string }) {
   const qc = useQueryClient()
-  const nextMon = addDays(weekStart(today()), 7)
+  const startDay = usePrefs().data?.week_start_day ?? 0
+  const nextMon = addDays(weekStart(today(), startDay), 7)
   const [from, setFrom] = useState(nextMon)
   const [to, setTo] = useState(addDays(nextMon, 6))
   const [headers, setHeaders] = useState(false)
@@ -254,7 +255,7 @@ export default function Shopping({ householdId }: { householdId: string }) {
             <Input type="date" value={to} onChange={(e) => e.target.value && setTo(e.target.value)} />
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <Button variant="ghost" className="bg-white" onClick={() => { const m = weekStart(today()); setFrom(m); setTo(addDays(m, 6)) }}>This week</Button>
+            <Button variant="ghost" className="bg-white" onClick={() => { const m = weekStart(today(), startDay); setFrom(m); setTo(addDays(m, 6)) }}>This week</Button>
             <Button variant="ghost" className="bg-white" onClick={() => { setFrom(nextMon); setTo(addDays(nextMon, 6)) }}>Next week</Button>
           </div>
         </details>

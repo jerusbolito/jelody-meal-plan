@@ -9,6 +9,7 @@ import Notifications from '../components/Notifications'
 import { Button, csv, Field, H1, Input } from '../components/ui'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const SLOTS = ['breakfast', 'lunch', 'dinner']
 
 export default function Settings({ household }: { household: { id: string; name: string; invite_code: string } }) {
@@ -88,6 +89,21 @@ export default function Settings({ household }: { household: { id: string; name:
       </section>
 
       <Notifications householdId={household.id} />
+
+      <section className="space-y-2">
+        <h2 className="font-semibold">Week starts on</h2>
+        <select aria-label="Week starts on" className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-3" value={p.week_start_day}
+          onChange={async (e) => {
+            const week_start_day = +e.target.value
+            setP({ ...p, week_start_day })
+            try { sessionStorage.removeItem('planner-ws') } catch { /* storage unavailable */ }
+            await supabase.from('preferences').update({ week_start_day }).eq('household_id', household.id)
+            qc.invalidateQueries({ queryKey: ['prefs'] })
+          }}>
+          {FULL_DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
+        </select>
+        <p className="text-sm text-slate-500">Used as the default start of the planner and shopping list. Saved automatically.</p>
+      </section>
 
       <section className="space-y-2">
         <h2 className="font-semibold">Meals per day</h2>

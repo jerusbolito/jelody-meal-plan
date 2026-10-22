@@ -45,6 +45,7 @@ export type Preferences = {
   weeknight_max_minutes: number
   new_ideas_per_week: number
   notes: string
+  week_start_day: number // 0 = Monday ... 6 = Sunday
 }
 
 export type PlanEntry = {
