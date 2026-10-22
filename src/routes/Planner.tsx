@@ -12,7 +12,17 @@ const fmt = (s: string) => parse(s).toLocaleDateString(undefined, { weekday: 'sh
 
 export default function Planner({ householdId }: { householdId: string }) {
   const qc = useQueryClient()
-  const [ws, setWs] = useState(() => addDays(weekStart(today()), 7)) // default: next week
+  const [ws, setWsState] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('planner-ws')
+      if (saved) return saved
+    } catch { /* storage unavailable */ }
+    return addDays(weekStart(today()), 7) // default: next week
+  })
+  const setWs = (v: string) => {
+    setWsState(v)
+    try { sessionStorage.setItem('planner-ws', v) } catch { /* storage unavailable */ }
+  }
   const [weeks, setWeeks] = useState(1)
   const [swapping, setSwapping] = useState<PlanEntry | null>(null)
   const [busy, setBusy] = useState(false)
@@ -205,7 +215,7 @@ export default function Planner({ householdId }: { householdId: string }) {
       </ul>
 
       {swapping && ready && (
-        <div className="fixed inset-0 z-10 flex items-end bg-black/40" onClick={() => { setSwapping(null); setQ('') }}>
+        <div className="fixed inset-0 z-30 flex items-end bg-black/40" onClick={() => { setSwapping(null); setQ('') }}>
           <div className="mx-auto max-h-[75dvh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300" />
             <h2 className="mb-2 text-lg font-semibold">Pick for {fmt(swapping.date)} · {swapping.slot}</h2>
